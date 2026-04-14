@@ -1,0 +1,171 @@
+@import "tailwindcss";
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  color: #171717;
+  background: #f6f8f7;
+  font-family: Georgia, "Times New Roman", serif;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+.sidepanel-shell {
+  min-height: 100vh;
+  padding: 22px;
+}
+
+.context-form {
+  display: grid;
+  gap: 16px;
+  max-width: 640px;
+  margin: 0 auto;
+}
+
+.editor-header {
+  padding-bottom: 8px;
+  border-bottom: 1px solid #d4ddda;
+}
+
+.eyebrow {
+  margin: 0 0 8px;
+  color: #38635e;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
+h1 {
+  margin: 0;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  font-size: 28px;
+  line-height: 1.12;
+}
+
+.url-line {
+  margin: 10px 0 0;
+  color: #59615f;
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
+
+.field {
+  display: grid;
+  gap: 8px;
+  color: #2f3533;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+textarea,
+input,
+select {
+  width: 100%;
+  border: 1px solid #b9c4bf;
+  border-radius: 8px;
+  padding: 10px 11px;
+  color: #171717;
+  background: #ffffff;
+}
+
+textarea {
+  resize: vertical;
+}
+
+textarea:focus,
+input:focus,
+select:focus {
+  border-color: #2f746d;
+  outline: 3px solid #c4e2df;
+}
+
+.tag-box {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  min-height: 44px;
+  border: 1px solid #b9c4bf;
+  border-radius: 8px;
+  padding: 8px;
+  background: #ffffff;
+}
+
+.tag-box input {
+  flex: 1 1 140px;
+  min-width: 100px;
+  min-height: 28px;
+  border: 0;
+  padding: 0;
+}
+
+.tag-box input:focus {
+  outline: 0;
+}
+
+.tag-pill {
+  border: 1px solid #88a8a4;
+  border-radius: 8px;
+  padding: 4px 8px;
+  color: #16443f;
+  background: #e7f1ef;
+  cursor: pointer;
+}
+
+.status {
+  min-height: 38px;
+  border-radius: 8px;
+  padding: 9px 11px;
+  color: #404745;
+  background: #ffffff;
+}
+
+.status-saved {
+  color: #245722;
+  background: #edf8ed;
+}
+
+.status-error {
+  color: #8a2e2e;
+  background: #fff0f0;
+}
+
+.context-form > button {
+  width: fit-content;
+  min-height: 42px;
+  border: 0;
+  border-radius: 8px;
+  padding: 10px 16px;
+  color: #ffffff;
+  background: #2f746d;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.context-form > button:disabled {
+  background: #8a9996;
+  cursor: wait;
+}
+
+@media (max-width: 520px) {
+  .sidepanel-shell {
+    padding: 16px;
+  }
+
+  h1 {
+    font-size: 24px;
+  }
+
+  .context-form > button {
+    width: 100%;
+  }
+}

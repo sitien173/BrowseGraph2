@@ -1,0 +1,17 @@
+{
+  "name": "browsegraph",
+  "version": "0.1.0",
+  "private": true,
+  "workspaces": [
+    "backend",
+    "extension"
+  ],
+  "scripts": {
+    "dev:backend": "npm --workspace backend run start:dev",
+    "dev:extension": "npm --workspace extension run dev",
+    "build:backend": "npm --workspace backend run build",
+    "build:extension": "npm --workspace extension run build",
+    "docker:up": "docker compose up -d",
+    "docker:down": "docker compose down"
+  }
+}
