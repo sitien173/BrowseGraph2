@@ -1,0 +1,16 @@
+.git
+.gitignore
+.playwright-mcp
+docs
+node_modules
+**/node_modules
+**/dist
+backend/web-dist
+extension/*
+!extension/package.json
+!extension/package-lock.json
+.env
+.env.*
+!.env.example
+bash.exe.stackdump
+CONOUT$

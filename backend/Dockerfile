@@ -1,19 +1,22 @@
 FROM node:20-alpine AS deps
 
-WORKDIR /app
+WORKDIR /workspace
 
 COPY package*.json ./
-RUN npm install
+COPY backend/package*.json ./backend/
+COPY web/package*.json ./web/
+COPY extension/package*.json ./extension/
+RUN npm ci
 
 FROM node:20-alpine AS build
 
-WORKDIR /app
+WORKDIR /workspace
 
-COPY --from=deps /app/node_modules ./node_modules
+COPY --from=deps /workspace/node_modules ./node_modules
+COPY backend ./backend
+COPY web ./web
 COPY package*.json ./
-COPY tsconfig.json ./
-COPY src ./src
-RUN npm run build
+RUN npm --prefix backend run build
 
 FROM node:20-alpine AS production
 
@@ -21,10 +24,16 @@ WORKDIR /app
 
 ENV NODE_ENV=production
 
-COPY package*.json ./
-RUN npm install --omit=dev
+COPY --from=build /workspace/package*.json ./
+COPY --from=deps /workspace/backend/package*.json ./backend/
+COPY --from=deps /workspace/web/package*.json ./web/
+COPY --from=deps /workspace/extension/package*.json ./extension/
+COPY --from=build /workspace/node_modules ./node_modules
+RUN npm prune --omit=dev --workspace backend
 
-COPY --from=build /app/dist ./dist
+WORKDIR /app/backend
+
+COPY --from=build /workspace/backend/dist ./dist
 
 EXPOSE 3000
 
