@@ -21,9 +21,17 @@ export interface GraphResult {
   edges: GraphEdge[];
 }
 
+export interface GraphSearchResult {
+  nodes: GraphNode[];
+}
+
 interface RawGraphResult {
   nodes: GraphNode[];
   edges: GraphEdge[];
+}
+
+interface RawGraphSearchResult {
+  nodes: GraphNode[];
 }
 
 const clampInteger = (value: number, minimum: number, maximum: number): number => {
@@ -56,16 +64,11 @@ WITH collect(DISTINCT n) AS allNodes, relBag
 UNWIND CASE WHEN relBag = [] THEN [null] ELSE relBag END AS r
 WITH allNodes, collect(DISTINCT r) AS allRels
 RETURN [n IN allNodes | {id: elementId(n), labels: labels(n), props: properties(n)}][..${safeLimit}] AS nodes,
-       [r IN allRels WHERE r IS NOT NULL | {id: elementId(r), type: type(r), from: elementId(startNode(r)), to: elementId(endNode(r)), props: properties(r)}] AS edges`,
+      [r IN allRels WHERE r IS NOT NULL | {id: elementId(r), type: type(r), from: elementId(startNode(r)), to: elementId(endNode(r)), props: properties(r)}] AS edges`,
       { nodeId }
     );
-    const record = result.records[0];
 
-    if (record === undefined) {
-      return { nodes: [], edges: [] };
-    }
-
-    return record.toObject() as RawGraphResult;
+    return this.mapGraphResult(result.records[0]);
   }
 
   async getFiltered(
@@ -92,8 +95,55 @@ RETURN nodes, [edge IN edges WHERE edge IS NOT NULL] AS edges`,
         session: session ?? null
       }
     );
+
+    return this.mapGraphResult(result.records[0]);
+  }
+
+  async search(
+    query: string | undefined,
+    limit: number
+  ): Promise<GraphSearchResult> {
+    const normalizedQuery = (query ?? "").trim().toLowerCase();
+
+    if (normalizedQuery.length === 0) {
+      return { nodes: [] };
+    }
+
+    const safeLimit = clampInteger(limit, 1, 100);
+    const result = await this.neo4jService.read(
+      `MATCH (n)
+WHERE toLower(coalesce(n.title, "")) CONTAINS $query
+   OR toLower(coalesce(n.normalizedUrl, "")) CONTAINS $query
+   OR (n:Tag AND (toLower(coalesce(n.name, "")) CONTAINS $query OR toLower(coalesce(n.slug, "")) CONTAINS $query))
+   OR (n:Domain AND (toLower(coalesce(n.host, "")) CONTAINS $query OR toLower(coalesce(n.normalizedHost, "")) CONTAINS $query))
+   OR EXISTS {
+       MATCH (n)-[:TAGGED_WITH]->(tag:Tag)
+       WHERE toLower(coalesce(tag.name, "")) CONTAINS $query
+          OR toLower(coalesce(tag.slug, "")) CONTAINS $query
+   }
+   OR EXISTS {
+       MATCH (n)-[:ON_DOMAIN]->(domain:Domain)
+       WHERE toLower(coalesce(domain.host, "")) CONTAINS $query
+          OR toLower(coalesce(domain.normalizedHost, "")) CONTAINS $query
+   }
+WITH n
+ORDER BY coalesce(n.lastSeenAt, n.createdAt, n.startedAt, "") DESC
+LIMIT $limit
+RETURN collect(DISTINCT {id: elementId(n), labels: labels(n), props: properties(n)}) AS nodes`,
+      { query: normalizedQuery, limit: safeLimit }
+    );
     const record = result.records[0];
 
+    if (record === undefined) {
+      return { nodes: [] };
+    }
+
+    return record.toObject() as RawGraphSearchResult;
+  }
+
+  private mapGraphResult(
+    record: { toObject: () => unknown } | undefined
+  ): GraphResult {
     if (record === undefined) {
       return { nodes: [], edges: [] };
     }

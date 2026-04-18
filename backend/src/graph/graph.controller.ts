@@ -1,6 +1,10 @@
 import { Controller, Get, Param, Query } from "@nestjs/common";
 
-import { GraphResult, GraphService } from "./graph.service";
+import {
+  GraphResult,
+  GraphSearchResult,
+  GraphService
+} from "./graph.service";
 
 @Controller("api/v1/graph")
 export class GraphController {
@@ -26,5 +30,15 @@ export class GraphController {
     @Query("session") session: string | undefined
   ): Promise<GraphResult> {
     return this.graphService.getFiltered(tag, domain, type, session);
+  }
+
+  @Get("search")
+  async search(
+    @Query("q") query: string | undefined,
+    @Query("limit") limit: string | undefined
+  ): Promise<GraphSearchResult> {
+    const parsedLimit = limit === undefined ? 25 : Number(limit);
+
+    return this.graphService.search(query, parsedLimit);
   }
 }

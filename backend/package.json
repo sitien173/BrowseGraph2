@@ -4,7 +4,7 @@
   "private": true,
   "type": "commonjs",
   "scripts": {
-    "build": "nest build",
+    "build": "npm --prefix ../web run build && nest build && node -e \"const fs=require('node:fs');const path=require('node:path');const src=path.resolve(process.cwd(),'web-dist');const dest=path.resolve(process.cwd(),'dist','web-dist');if(fs.existsSync(src)){fs.mkdirSync(path.dirname(dest),{recursive:true});fs.cpSync(src,dest,{recursive:true});}\"",
     "start": "node dist/main.js",
     "start:dev": "nest start --watch",
     "test": "jest",
@@ -12,6 +12,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@fastify/static": "^8.0.0",
     "@nestjs/common": "^11.0.0",
     "@nestjs/config": "^4.0.0",
     "@nestjs/core": "^11.0.0",

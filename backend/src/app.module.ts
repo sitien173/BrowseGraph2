@@ -9,6 +9,7 @@ import { EdgesModule } from "./edges/edges.module";
 import { GraphModule } from "./graph/graph.module";
 import { Neo4jModule } from "./neo4j/neo4j.module";
 import { NodesModule } from "./nodes/nodes.module";
+import { WebModule } from "./web/web.module";
 
 @Module({
   imports: [
@@ -24,6 +25,7 @@ import { NodesModule } from "./nodes/nodes.module";
     NodesModule,
     EdgesModule,
     GraphModule,
+    WebModule,
     DiagnosticsModule,
     AuthModule
   ],

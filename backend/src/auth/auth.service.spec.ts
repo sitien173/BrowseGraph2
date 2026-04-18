@@ -50,7 +50,7 @@ describe("AuthService", () => {
     expect(issuedKey.key).toMatch(/^[a-f0-9]{64}$/);
     expect(issuedKey.hash).not.toBe(issuedKey.key);
     expect(neo4jService.write).toHaveBeenCalledWith(
-      "MERGE (k:ApiKey { createdAt: $createdAt }) SET k.hash = $hash",
+      "CREATE (k:ApiKey { hash: $hash, createdAt: $createdAt })",
       expect.objectContaining({ hash: issuedKey.hash })
     );
   });

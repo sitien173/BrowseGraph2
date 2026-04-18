@@ -4,13 +4,16 @@
   "private": true,
   "workspaces": [
     "backend",
-    "extension"
+    "extension",
+    "web"
   ],
   "scripts": {
     "dev:backend": "npm --workspace backend run start:dev",
     "dev:extension": "npm --workspace extension run dev",
+    "dev:web": "npm --workspace web run dev",
     "build:backend": "npm --workspace backend run build",
     "build:extension": "npm --workspace extension run build",
+    "build:web": "npm --workspace web run build",
     "docker:up": "docker compose up -d",
     "docker:down": "docker compose down"
   }
