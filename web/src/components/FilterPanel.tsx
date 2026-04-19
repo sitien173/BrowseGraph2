@@ -56,33 +56,33 @@ export default function FilterPanel({ onApplyFilter, isFiltering }: FilterPanelP
     <form onSubmit={handleApply} className="filter-panel">
       <div className="filter-grid">
         <div className="filter-group">
-          <label>Tag</label>
+          <label>TAG_SCOPE</label>
           <input type="text" value={tag} onChange={(e) => setTag(e.target.value)} placeholder="*" />
         </div>
         <div className="filter-group">
-          <label>Domain</label>
+          <label>DOMAIN_FILTER</label>
           <input type="text" value={domain} onChange={(e) => setDomain(e.target.value)} placeholder="*" />
         </div>
         <div className="filter-group">
-          <label>Edge Type</label>
+          <label>EDGE_TYPE</label>
           <input type="text" value={type} onChange={(e) => setType(e.target.value)} placeholder="*" />
         </div>
         <div className="filter-group">
-          <label>Session ID</label>
+          <label>SESSION_ID</label>
           <input type="text" value={session} onChange={(e) => setSession(e.target.value)} placeholder="*" />
         </div>
       </div>
       <div className="filter-actions">
-        <button type="submit" disabled={isFiltering || applyState === "applying"}>Apply Params</button>
+        <button type="submit" disabled={isFiltering || applyState === "applying"}>APPLY_PARAMS</button>
         {hasFilters && (
           <button type="button" onClick={() => void handleClear()} className="ghost-button" disabled={isFiltering || applyState === "applying"}>
-            Reset
+            RESET
           </button>
         )}
       </div>
       {applyMessage && (
         <div className={`filter-status ${applyState === "error" ? "is-error" : ""}`}>
-          {applyMessage}
+          {applyState === "error" ? `ERR: ${applyMessage}` : `STATUS: ${applyMessage.toUpperCase()}`}
         </div>
       )}
     </form>

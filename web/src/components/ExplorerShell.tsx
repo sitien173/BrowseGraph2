@@ -150,51 +150,78 @@ export default function ExplorerShell({
       />
       
       <div className="shell-workspace">
-        <div className="shell-canvas">
-          <GraphCanvas 
-            graph={graph} 
-            onNodeClick={setSelectedNodeId} 
-            selectedNodeId={selectedNodeId} 
-            centeredNodeId={centeredNodeId} 
-          />
-          {isLoading && <div className="canvas-loading">Processing...</div>}
-        </div>
-        
-        <div className="shell-overlays">
-          <aside className="overlay-panel overlay-left">
-            <div className="overlay-section">
-              <h2 className="section-title">Query</h2>
-              <SearchPanel 
-                onSearch={handleSearch} 
-                onSelectNode={handleRecenter} 
-                isSearching={isLoading || isLoadingSeed}
-              />
-            </div>
-            <div className="overlay-section">
-              <h2 className="section-title">Filter</h2>
-              <FilterPanel 
-                onApplyFilter={handleFilter} 
-                isFiltering={isLoading || isLoadingSeed}
-              />
-            </div>
-          </aside>
+        <aside className="shell-rail">
+          <div className="rail-section">
+            <span className="section-title">Query Nodes</span>
+            <SearchPanel 
+              onSearch={handleSearch} 
+              onSelectNode={handleRecenter} 
+              isSearching={isLoading || isLoadingSeed}
+            />
+          </div>
+          <div className="rail-section">
+            <span className="section-title">Filter Graph</span>
+            <FilterPanel 
+              onApplyFilter={handleFilter} 
+              isFiltering={isLoading || isLoadingSeed}
+            />
+          </div>
+        </aside>
+
+        <section className="shell-canvas-container">
+          <div className="shell-canvas">
+            <GraphCanvas 
+              graph={graph} 
+              onNodeClick={setSelectedNodeId} 
+              selectedNodeId={selectedNodeId} 
+              centeredNodeId={centeredNodeId} 
+            />
+          </div>
           
-          <div className="overlay-center-layer">
+          <div className="canvas-ui-layer">
+            <div className="graph-status-bar">
+              <div className="status-item">
+                <span className="status-label">NODES:</span>
+                <span className="status-value">{graph.nodes.length}</span>
+              </div>
+              <div className="status-item">
+                <span className="status-label">EDGES:</span>
+                <span className="status-value">{graph.edges.length}</span>
+              </div>
+              <div className="status-item">
+                <span className="status-label">DEPTH:</span>
+                <span className="status-value">{depth}</span>
+              </div>
+              {centeredNodeId && (
+                <div className="status-item">
+                  <span className="status-label">FOCUS:</span>
+                  <span className="status-value" title={centeredNodeId}>{centeredNodeId.slice(0, 8)}...</span>
+                </div>
+              )}
+            </div>
+            {isLoading && <div className="canvas-loading">Processing Request...</div>}
             {renderCanvasOverlay()}
             {inlineError && <ErrorBanner error={inlineError} onDismiss={() => setInlineError(null)} />}
           </div>
-          
-          {selectedNode && (
-            <aside className="overlay-panel overlay-right">
-              <NodeDetailPanel 
-                node={selectedNode} 
-                onRecenter={handleRecenter} 
-                onExpand={handleExpand} 
-                isExpanding={isLoading} 
-              />
-            </aside>
+        </section>
+
+        <aside className="shell-inspector">
+          {selectedNode ? (
+            <NodeDetailPanel 
+              node={selectedNode} 
+              onRecenter={handleRecenter} 
+              onExpand={handleExpand} 
+              isExpanding={isLoading} 
+            />
+          ) : (
+            <div className="rail-section">
+              <span className="section-title">Inspector</span>
+              <p style={{ fontSize: "0.75rem", color: "var(--muted)", fontStyle: "italic" }}>
+                Select a node to view metadata and relationships.
+              </p>
+            </div>
           )}
-        </div>
+        </aside>
       </div>
     </main>
   );

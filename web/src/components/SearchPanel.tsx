@@ -53,24 +53,25 @@ export default function SearchPanel({
               setError(null);
             }
           }}
-          placeholder="SEARCH NODES..."
+          placeholder="SEARCH_NODES..."
           className="search-input"
         />
         <button
           type="submit"
           disabled={isSearching || query.trim().length === 0}
           className="search-button"
+          title="Execute Search"
         >
           <Search size={14} />
         </button>
       </form>
 
-      {error && <div className="search-error">{error}</div>}
-      {isSearching && <div className="search-status">Searching...</div>}
+      {error && <div className="search-error">ERR: {error}</div>}
+      {isSearching && <div className="search-status">EXECUTING_QUERY...</div>}
 
       {results && results.nodes.length > 0 && (
         <div className="search-results">
-          <div className="results-header">Yield: {results.nodes.length} Nodes</div>
+          <div className="results-header">YIELD: {results.nodes.length} NODES</div>
           <ul className="result-list">
             {results.nodes.slice(0, 10).map(node => (
               <li key={node.id} onClick={() => onSelectNode(node.id)}>
@@ -85,7 +86,7 @@ export default function SearchPanel({
       )}
       {results && results.nodes.length === 0 && (
         <div className="search-results empty">
-          No matches for "{lastQuery ?? query.trim()}"
+          NO_MATCHES: "{lastQuery ?? query.trim()}"
         </div>
       )}
     </div>
