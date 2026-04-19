@@ -397,7 +397,33 @@ button:disabled {
   font-family: var(--font-mono);
   font-size: 0.7rem;
 }
-.results-header { font-family: var(--font-mono); font-size: 0.65rem; color: var(--muted); margin-bottom: 0.4rem; text-transform: uppercase; }
+.results-header {
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  color: var(--muted);
+  margin-bottom: 0.4rem;
+  text-transform: uppercase;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+.search-results-dismiss {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: 1px solid var(--line);
+  color: var(--muted);
+  width: 1.2rem;
+  height: 1.2rem;
+  padding: 0;
+}
+.search-results-dismiss:hover:not(:disabled) {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: var(--panel-strong);
+}
 .result-list { display: grid; gap: 0.2rem; list-style: none; padding: 0; margin: 0; }
 .result-list li { display: flex; flex-direction: column; padding: 0.4rem; background: var(--panel-strong); border: 1px solid var(--line); border-radius: var(--radius); cursor: pointer; transition: all 0.1s; min-width: 0; }
 .result-list li:hover { border-color: var(--accent); background: var(--bg-deep); }
@@ -405,15 +431,53 @@ button:disabled {
 .result-title { font-size: 0.75rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-top: 0.1rem; min-width: 0; }
 .search-results.empty { color: var(--muted); font-family: var(--font-mono); font-size: 0.7rem; }
 .search-error { color: var(--danger); font-family: var(--font-mono); font-size: 0.7rem; margin-top: 0.5rem; }
+.search-inline-button {
+  margin-left: 0.35rem;
+  padding: 0.12rem 0.3rem;
+  font-size: 0.6rem;
+  background: transparent;
+  color: var(--muted);
+  border: 1px solid var(--line);
+}
+.search-inline-button:hover:not(:disabled) {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: var(--panel-strong);
+}
 
 /* Filter */
+.filter-active-state {
+  margin-bottom: 0.6rem;
+  display: grid;
+  gap: 0.35rem;
+}
+.filter-active-header {
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  color: var(--muted);
+  letter-spacing: 0.04em;
+}
+.filter-chip-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+}
+.filter-chip {
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  color: var(--accent);
+  border: 1px solid var(--line);
+  background: var(--panel-strong);
+  border-radius: var(--radius);
+  padding: 0.1rem 0.3rem;
+}
 .filter-grid { display: grid; gap: 0.5rem; }
 .filter-group { display: flex; flex-direction: column; gap: 0.2rem; }
 .filter-group label { font-family: var(--font-mono); font-size: 0.6rem; color: var(--muted); text-transform: uppercase; }
 .filter-group input { padding: 0.3rem 0.4rem; background: var(--bg-deep); border: 1px solid var(--line); border-radius: var(--radius); color: var(--ink); font-family: var(--font-mono); font-size: 0.7rem; }
 .filter-group input:focus { border-color: var(--accent); outline: none; }
-.filter-actions { display: flex; gap: 0.4rem; margin-top: 0.75rem; }
-.filter-actions button { flex: 1; padding: 0.35rem; font-size: 0.7rem; }
+.filter-actions { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 0.75rem; }
+.filter-actions button { flex: 1 1 30%; min-width: 7rem; padding: 0.35rem; font-size: 0.7rem; }
 .filter-status {
   margin-top: 0.5rem;
   font-family: var(--font-mono);
@@ -515,8 +579,20 @@ button:disabled {
   border: 1px solid var(--line);
 }
 .empty-state-panel.is-error .empty-state-icon { color: var(--danger); }
+.empty-state-context {
+  margin: 0 0 0.2rem;
+  color: var(--accent);
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  text-transform: uppercase;
+}
 .empty-state-content h3 { color: var(--ink); font-size: 0.85rem; margin-bottom: 0.25rem; text-transform: uppercase; letter-spacing: 0.05em; }
 .empty-state-content p { color: var(--muted); font-size: 0.75rem; line-height: 1.4; margin: 0; }
+.empty-state-action {
+  margin-top: 0.6rem;
+  padding: 0.3rem 0.6rem;
+  font-size: 0.62rem;
+}
 
 /* Error Banner */
 .error-banner {

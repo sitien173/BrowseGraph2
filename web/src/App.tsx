@@ -60,6 +60,7 @@ export default function App() {
       await loadSeed(key);
       storeApiKey(key);
       setApiKey(key);
+      setSeedError(null);
     } catch (error) {
       setAuthError(toUiErrorMessage(error));
     } finally {

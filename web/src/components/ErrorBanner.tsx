@@ -1,14 +1,15 @@
 interface ErrorBannerProps {
   error: string;
+  source?: string;
   onDismiss?: () => void;
 }
 
-export default function ErrorBanner({ error, onDismiss }: ErrorBannerProps) {
+export default function ErrorBanner({ error, source, onDismiss }: ErrorBannerProps) {
   if (!error) return null;
   return (
     <div className="error-banner">
       <div className="error-content">
-        <span className="error-badge">ERR</span>
+        <span className="error-badge">{source ? source.toUpperCase() : "ERR"}</span>
         <p>{error}</p>
       </div>
       {onDismiss && (

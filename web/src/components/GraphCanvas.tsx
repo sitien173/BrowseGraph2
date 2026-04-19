@@ -39,7 +39,7 @@ export default function GraphCanvas({ graph, onNodeClick, selectedNodeId, center
     const nodes = graph.nodes.map(n => {
       let displayName = n.id;
       const type = n.labels[0];
-      
+
       if (type === "Tab") {
         displayName = String(n.props.title || n.props.name || n.props.normalizedUrl || n.id);
       } else if (type === "Domain") {
@@ -60,13 +60,16 @@ export default function GraphCanvas({ graph, onNodeClick, selectedNodeId, center
         baseColor: NODE_COLORS[type] || "#e3ece6"
       };
     });
-    
-    const links = graph.edges.map(e => ({
-      ...e,
-      source: e.from,
-      target: e.to,
-      value: e.type === "RELATED" ? (Number(e.props.score) || 1) : 10
-    }));
+    const nodeIds = new Set(nodes.map((node) => node.id));
+
+    const links = graph.edges
+      .filter((edge) => nodeIds.has(edge.from) && nodeIds.has(edge.to))
+      .map(e => ({
+        ...e,
+        source: e.from,
+        target: e.to,
+        value: e.type === "RELATED" ? (Number(e.props.score) || 1) : 10
+      }));
 
     const degrees: Record<string, number> = {};
     links.forEach(l => {

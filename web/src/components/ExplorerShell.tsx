@@ -9,6 +9,22 @@ import NodeDetailPanel from "./NodeDetailPanel";
 import EmptyState from "./EmptyState";
 import ErrorBanner from "./ErrorBanner";
 
+type GraphFilters = {
+  tag: string;
+  domain: string;
+  type: string;
+  session: string;
+};
+
+type GraphAction = "search" | "filter" | "recenter" | "expand";
+
+const EMPTY_FILTERS: GraphFilters = {
+  tag: "",
+  domain: "",
+  type: "",
+  session: ""
+};
+
 interface ExplorerShellProps {
   apiKey: string;
   backendUrl: string;
@@ -29,55 +45,83 @@ export default function ExplorerShell({
   onSignOut
 }: ExplorerShellProps) {
   const [graph, setGraph] = useState<GraphResult>(seedGraph);
-  const [isLoading, setIsLoading] = useState(false);
-  const [inlineError, setInlineError] = useState<string | null>(null);
+  const [activeAction, setActiveAction] = useState<GraphAction | null>(null);
+  const [inlineError, setInlineError] = useState<{ source: string; message: string } | null>(null);
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
   const [centeredNodeId, setCenteredNodeId] = useState<string | null>(null);
   const [depth, setDepth] = useState(2);
   const [hasInteracted, setHasInteracted] = useState(false);
+  const [activeFilters, setActiveFilters] = useState<GraphFilters>(EMPTY_FILTERS);
+  const [dismissedSeedError, setDismissedSeedError] = useState<string | null>(null);
 
   useEffect(() => {
     setGraph(seedGraph);
+    setActiveAction(null);
     setInlineError(null);
     setSelectedNodeId(null);
     setCenteredNodeId(null);
     setDepth(2);
     setHasInteracted(false);
+    setActiveFilters(EMPTY_FILTERS);
   }, [seedGraph]);
+
+  useEffect(() => {
+    setDismissedSeedError(null);
+  }, [loadErrorMessage]);
 
   const selectedNode = selectedNodeId
     ? graph.nodes.find((node) => node.id === selectedNodeId) ?? null
     : null;
 
   const handleSearch = async (query: string): Promise<GraphResult> => {
-    return fetchSearchNodes(apiKey, query, 20, backendUrl);
+    if (activeAction !== null) {
+      throw new Error("Wait for the current graph request to finish.");
+    }
+
+    setActiveAction("search");
+    try {
+      return await fetchSearchNodes(apiKey, query, 20, backendUrl);
+    } finally {
+      setActiveAction(null);
+    }
   };
 
-  const handleFilter = async (filters: {
-    tag: string;
-    domain: string;
-    type: string;
-    session: string;
-  }): Promise<void> => {
-    setIsLoading(true);
-    setInlineError(null);
+  const handleFilter = async (filters: GraphFilters): Promise<void> => {
+    if (activeAction !== null) {
+      throw new Error("Wait for the current graph request to finish.");
+    }
+
+    setActiveAction("filter");
     try {
       const result = await fetchFilteredGraph(apiKey, filters, backendUrl);
       setGraph(result);
-      setSelectedNodeId(null);
-      setCenteredNodeId(null);
+      const nextSelected = selectedNodeId && result.nodes.some((node) => node.id === selectedNodeId)
+        ? selectedNodeId
+        : null;
+      const nextCentered = centeredNodeId && result.nodes.some((node) => node.id === centeredNodeId)
+        ? centeredNodeId
+        : null;
+      setSelectedNodeId(nextSelected);
+      setCenteredNodeId(nextCentered);
+      setActiveFilters(filters);
       setHasInteracted(true);
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Filter failed";
-      setInlineError(message);
-      throw err instanceof Error ? err : new Error(message);
+      throw err instanceof Error ? err : new Error("Filter failed");
     } finally {
-      setIsLoading(false);
+      setActiveAction(null);
     }
   };
 
   const handleRecenter = async (nodeId: string): Promise<void> => {
-    setIsLoading(true);
+    if (activeAction !== null) {
+      setInlineError({
+        source: "node",
+        message: "Wait for the current graph request to finish."
+      });
+      return;
+    }
+
+    setActiveAction("recenter");
     setInlineError(null);
     try {
       const result = await fetchNeighborhood(apiKey, nodeId, depth, 100, backendUrl);
@@ -86,14 +130,25 @@ export default function ExplorerShell({
       setSelectedNodeId(nodeId);
       setHasInteracted(true);
     } catch (err) {
-      setInlineError(err instanceof Error ? err.message : "Recenter failed");
+      setInlineError({
+        source: "recenter",
+        message: err instanceof Error ? err.message : "Recenter failed"
+      });
     } finally {
-      setIsLoading(false);
+      setActiveAction(null);
     }
   };
 
   const handleExpand = async (nodeId: string): Promise<void> => {
-    setIsLoading(true);
+    if (activeAction !== null) {
+      setInlineError({
+        source: "node",
+        message: "Wait for the current graph request to finish."
+      });
+      return;
+    }
+
+    setActiveAction("expand");
     setInlineError(null);
     try {
       const nextDepth = depth + 1;
@@ -103,35 +158,64 @@ export default function ExplorerShell({
       setCenteredNodeId(nodeId);
       setHasInteracted(true);
     } catch (err) {
-      setInlineError(err instanceof Error ? err.message : "Expand failed");
+      setInlineError({
+        source: "expand",
+        message: err instanceof Error ? err.message : "Expand failed"
+      });
     } finally {
-      setIsLoading(false);
+      setActiveAction(null);
     }
   };
 
+  const graphIsEmpty = graph.nodes.length === 0;
+  const showSeedErrorBanner = Boolean(
+    loadErrorMessage &&
+      !graphIsEmpty &&
+      dismissedSeedError !== loadErrorMessage
+  );
+
   const renderCanvasOverlay = () => {
-    if (isLoadingSeed) {
-      return <EmptyState title="Initializing Graph" message="Establishing connection and requesting seed telemetry." />;
+    if (isLoadingSeed && graphIsEmpty) {
+      return (
+        <EmptyState
+          contextLabel="SEED LOAD"
+          title="Initializing Graph"
+          message="Establishing connection and requesting seed telemetry."
+        />
+      );
     }
 
-    if (loadErrorMessage) {
-      return <EmptyState title="Connection Failed" message={loadErrorMessage} isError />;
+    if (loadErrorMessage && graphIsEmpty) {
+      return (
+        <EmptyState
+          contextLabel="SEED LOAD"
+          title="Connection Failed"
+          message={loadErrorMessage}
+          isError
+          actionLabel="Retry Seed Load"
+          onAction={() => {
+            void onReloadSeed();
+          }}
+        />
+      );
     }
 
-    if (graph.nodes.length === 0 && !hasInteracted) {
+    if (graphIsEmpty && !hasInteracted) {
       return (
         <EmptyState 
+          contextLabel="SEED GRAPH"
           title="Awaiting Telemetry" 
           message="No activity detected. Ensure the capture extension is active, then refresh the seed." 
         />
       );
     }
     
-    if (graph.nodes.length === 0) {
+    if (graphIsEmpty) {
       return (
         <EmptyState 
+          contextLabel="FILTER/NEIGHBORHOOD RESULT"
           title="Zero Yield" 
-          message="The query parameters returned no nodes. Adjust filters to broaden scope." 
+          message="The current scope returned no nodes. Revert filters or recenter on a different node."
         />
       );
     }
@@ -156,14 +240,15 @@ export default function ExplorerShell({
             <SearchPanel 
               onSearch={handleSearch} 
               onSelectNode={handleRecenter} 
-              isSearching={isLoading || isLoadingSeed}
+              isSearching={activeAction === "search" || isLoadingSeed}
             />
           </div>
           <div className="rail-section">
             <span className="section-title">Filter Graph</span>
             <FilterPanel 
+              activeFilters={activeFilters}
               onApplyFilter={handleFilter} 
-              isFiltering={isLoading || isLoadingSeed}
+              isFiltering={activeAction === "filter" || isLoadingSeed}
             />
           </div>
         </aside>
@@ -192,6 +277,12 @@ export default function ExplorerShell({
                 <span className="status-label">DEPTH:</span>
                 <span className="status-value">{depth}</span>
               </div>
+              {(activeFilters.tag || activeFilters.domain || activeFilters.type || activeFilters.session) && (
+                <div className="status-item">
+                  <span className="status-label">FILTERS:</span>
+                  <span className="status-value">ACTIVE</span>
+                </div>
+              )}
               {centeredNodeId && (
                 <div className="status-item">
                   <span className="status-label">FOCUS:</span>
@@ -199,9 +290,34 @@ export default function ExplorerShell({
                 </div>
               )}
             </div>
-            {isLoading && <div className="canvas-loading">Processing Request...</div>}
+            {(activeAction !== null || (isLoadingSeed && !graphIsEmpty)) && (
+              <div className="canvas-loading">
+                {isLoadingSeed
+                  ? "Refreshing Seed..."
+                  : activeAction === "search"
+                    ? "Searching..."
+                    : activeAction === "filter"
+                      ? "Applying Filters..."
+                      : activeAction === "recenter"
+                        ? "Recentering..."
+                        : "Expanding..."}
+              </div>
+            )}
             {renderCanvasOverlay()}
-            {inlineError && <ErrorBanner error={inlineError} onDismiss={() => setInlineError(null)} />}
+            {inlineError && (
+              <ErrorBanner
+                source={inlineError.source}
+                error={inlineError.message}
+                onDismiss={() => setInlineError(null)}
+              />
+            )}
+            {showSeedErrorBanner && loadErrorMessage && (
+              <ErrorBanner
+                source="refresh"
+                error={loadErrorMessage}
+                onDismiss={() => setDismissedSeedError(loadErrorMessage)}
+              />
+            )}
           </div>
         </section>
 
@@ -211,7 +327,11 @@ export default function ExplorerShell({
               node={selectedNode} 
               onRecenter={handleRecenter} 
               onExpand={handleExpand} 
-              isExpanding={isLoading} 
+              isExpanding={
+                activeAction === "recenter" ||
+                activeAction === "expand" ||
+                isLoadingSeed
+              }
             />
           ) : (
             <div className="rail-section">

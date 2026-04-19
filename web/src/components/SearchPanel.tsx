@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { GraphResult } from "../types/graph";
-import { Search } from "lucide-react";
+import { Search, X } from "lucide-react";
 
 interface SearchPanelProps {
   onSearch: (query: string) => Promise<GraphResult>;
@@ -16,6 +16,7 @@ export default function SearchPanel({
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<GraphResult | null>(null);
   const [lastQuery, setLastQuery] = useState<string | null>(null);
+  const [lastFocusedNodeLabel, setLastFocusedNodeLabel] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const handleSearch = async (e: React.FormEvent) => {
@@ -25,6 +26,7 @@ export default function SearchPanel({
     if (!trimmedQuery) {
       setResults(null);
       setLastQuery(null);
+      setLastFocusedNodeLabel(null);
       setError(null);
       return;
     }
@@ -34,9 +36,27 @@ export default function SearchPanel({
       const res = await onSearch(trimmedQuery);
       setResults(res);
       setLastQuery(trimmedQuery);
+      setLastFocusedNodeLabel(null);
     } catch (err) {
+      setResults(null);
+      setLastQuery(trimmedQuery);
+      setLastFocusedNodeLabel(null);
       setError(err instanceof Error ? err.message : "Search failed");
     }
+  };
+
+  const dismissResults = () => {
+    setResults(null);
+    setLastQuery(null);
+  };
+
+  const handleSelectNode = (nodeId: string, label: string) => {
+    onSelectNode(nodeId);
+    setLastFocusedNodeLabel(label);
+    setResults(null);
+    setLastQuery(null);
+    setQuery("");
+    setError(null);
   };
 
   return (
@@ -68,13 +88,29 @@ export default function SearchPanel({
 
       {error && <div className="search-error">ERR: {error}</div>}
       {isSearching && <div className="search-status">EXECUTING_QUERY...</div>}
+      {lastFocusedNodeLabel && (
+        <div className="search-status">NAVIGATED TO: {lastFocusedNodeLabel}</div>
+      )}
 
       {results && results.nodes.length > 0 && (
         <div className="search-results">
-          <div className="results-header">YIELD: {results.nodes.length} NODES</div>
+          <div className="results-header">
+            <span>SELECT NODE TO RECENTER ({results.nodes.length})</span>
+            <button type="button" className="search-results-dismiss" onClick={dismissResults}>
+              <X size={12} />
+            </button>
+          </div>
           <ul className="result-list">
             {results.nodes.slice(0, 10).map(node => (
-              <li key={node.id} onClick={() => onSelectNode(node.id)}>
+              <li
+                key={node.id}
+                onClick={() =>
+                  handleSelectNode(
+                    node.id,
+                    String(node.props.title ?? node.props.name ?? node.props.normalizedUrl ?? node.id)
+                  )
+                }
+              >
                 <span className="result-label">{node.labels[0] || "NODE"}</span>
                 <span className="result-title" title={String(node.props.title ?? node.props.name ?? node.props.normalizedUrl ?? node.id)}>
                   {String(node.props.title ?? node.props.name ?? node.props.normalizedUrl ?? node.id)}
@@ -86,7 +122,10 @@ export default function SearchPanel({
       )}
       {results && results.nodes.length === 0 && (
         <div className="search-results empty">
-          NO_MATCHES: "{lastQuery ?? query.trim()}"
+          NO_MATCHES: "{lastQuery ?? query.trim()}"{" "}
+          <button type="button" className="search-inline-button" onClick={dismissResults}>
+            CLOSE
+          </button>
         </div>
       )}
     </div>
