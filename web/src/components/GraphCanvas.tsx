@@ -18,6 +18,18 @@ interface GraphCanvasProps {
   centeredNodeId: string | null;
 }
 
+const truncateLabel = (value: string, maxLength: number): string => {
+  if (value.length <= maxLength) {
+    return value;
+  }
+
+  if (maxLength <= 1) {
+    return value.slice(0, 1);
+  }
+
+  return `${value.slice(0, maxLength - 1)}…`;
+};
+
 export default function GraphCanvas({ graph, onNodeClick, selectedNodeId, centeredNodeId }: GraphCanvasProps): ReactElement {
   const fgRef = useRef<ForceGraphMethods>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -120,9 +132,10 @@ export default function GraphCanvas({ graph, onNodeClick, selectedNodeId, center
         backgroundColor="transparent"
         nodeCanvasObject={(node, ctx, globalScale) => {
           const n = node as any;
-          const label = n.displayName;
           const fontSize = 12 / globalScale;
           const isFocal = n.id === selectedNodeId || n.id === centeredNodeId;
+          const labelMaxLength = isFocal ? 42 : globalScale > 2.4 ? 26 : 18;
+          const label = truncateLabel(String(n.displayName ?? n.id), labelMaxLength);
           
           // Draw Circle
           ctx.beginPath();
@@ -141,9 +154,23 @@ export default function GraphCanvas({ graph, onNodeClick, selectedNodeId, center
             ctx.font = `${isFocal ? 'bold ' : ''}${fontSize}px var(--font-mono)`;
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
-            ctx.fillStyle = isFocal ? "#ffffff" : "rgba(227, 236, 230, 0.8)";
             
             const textY = n.y + Math.sqrt(n.val) * 2 + fontSize * 1.2;
+
+            if (isFocal) {
+              const paddingX = 4 / globalScale;
+              const paddingY = 2 / globalScale;
+              const textWidth = ctx.measureText(label).width;
+              const boxWidth = textWidth + paddingX * 2;
+              const boxHeight = fontSize + paddingY * 2;
+
+              ctx.fillStyle = "rgba(7, 14, 10, 0.7)";
+              ctx.fillRect(n.x - boxWidth / 2, textY - boxHeight / 2, boxWidth, boxHeight);
+              ctx.fillStyle = "#ffffff";
+            } else {
+              ctx.fillStyle = "rgba(200, 214, 206, 0.62)";
+            }
+
             ctx.fillText(label, n.x, textY);
           }
         }}

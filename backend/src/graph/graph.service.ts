@@ -112,22 +112,22 @@ RETURN nodes, [edge IN edges WHERE edge IS NOT NULL] AS edges`,
     const safeLimit = clampInteger(limit, 1, 100);
     const result = await this.neo4jService.read(
       `MATCH (n)
-WHERE toLower(coalesce(n.title, "")) CONTAINS $query
-   OR toLower(coalesce(n.normalizedUrl, "")) CONTAINS $query
-   OR (n:Tag AND (toLower(coalesce(n.name, "")) CONTAINS $query OR toLower(coalesce(n.slug, "")) CONTAINS $query))
-   OR (n:Domain AND (toLower(coalesce(n.host, "")) CONTAINS $query OR toLower(coalesce(n.normalizedHost, "")) CONTAINS $query))
+WHERE toLower(toString(coalesce(n.title, ""))) CONTAINS $query
+   OR toLower(toString(coalesce(n.normalizedUrl, ""))) CONTAINS $query
+   OR (n:Tag AND (toLower(toString(coalesce(n.name, ""))) CONTAINS $query OR toLower(toString(coalesce(n.slug, ""))) CONTAINS $query))
+   OR (n:Domain AND (toLower(toString(coalesce(n.host, ""))) CONTAINS $query OR toLower(toString(coalesce(n.normalizedHost, ""))) CONTAINS $query))
    OR EXISTS {
        MATCH (n)-[:TAGGED_WITH]->(tag:Tag)
-       WHERE toLower(coalesce(tag.name, "")) CONTAINS $query
-          OR toLower(coalesce(tag.slug, "")) CONTAINS $query
+       WHERE toLower(toString(coalesce(tag.name, ""))) CONTAINS $query
+          OR toLower(toString(coalesce(tag.slug, ""))) CONTAINS $query
    }
    OR EXISTS {
        MATCH (n)-[:ON_DOMAIN]->(domain:Domain)
-       WHERE toLower(coalesce(domain.host, "")) CONTAINS $query
-          OR toLower(coalesce(domain.normalizedHost, "")) CONTAINS $query
+       WHERE toLower(toString(coalesce(domain.host, ""))) CONTAINS $query
+          OR toLower(toString(coalesce(domain.normalizedHost, ""))) CONTAINS $query
    }
 WITH n
-ORDER BY coalesce(n.lastSeenAt, n.createdAt, n.startedAt, "") DESC
+ORDER BY coalesce(toString(n.lastSeenAt), toString(n.createdAt), toString(n.startedAt), "") DESC
 LIMIT $limit
 RETURN collect(DISTINCT {id: elementId(n), labels: labels(n), props: properties(n)}) AS nodes`,
       { query: normalizedQuery, limit: safeLimit }

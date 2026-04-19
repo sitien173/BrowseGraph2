@@ -44,4 +44,26 @@ describe("GraphService search", () => {
       expect.objectContaining({ query: "neo4j", limit: 100 })
     );
   });
+
+  it("casts searchable and sortable fields to string to avoid runtime type failures", async () => {
+    const { graphService, neo4jService } = await createService([
+      {
+        toObject: () => ({ nodes: [] })
+      }
+    ]);
+
+    await graphService.search("Morph", 25);
+
+    const [query] = neo4jService.read.mock.calls[0] as [string, Record<string, unknown>];
+    expect(query).toContain("toLower(toString(coalesce(n.title, \"\"))) CONTAINS $query");
+    expect(query).toContain(
+      "ORDER BY coalesce(toString(n.lastSeenAt), toString(n.createdAt), toString(n.startedAt), \"\") DESC"
+    );
+  });
+
+  it("returns an empty nodes array when Neo4j returns no records", async () => {
+    const { graphService } = await createService([]);
+
+    await expect(graphService.search("Morph", 25)).resolves.toEqual({ nodes: [] });
+  });
 });
