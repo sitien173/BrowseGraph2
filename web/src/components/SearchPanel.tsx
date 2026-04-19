@@ -15,16 +15,25 @@ export default function SearchPanel({
 }: SearchPanelProps) {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<GraphResult | null>(null);
+  const [lastQuery, setLastQuery] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!query.trim()) return;
+    const trimmedQuery = query.trim();
+
+    if (!trimmedQuery) {
+      setResults(null);
+      setLastQuery(null);
+      setError(null);
+      return;
+    }
     
     setError(null);
     try {
-      const res = await onSearch(query);
+      const res = await onSearch(trimmedQuery);
       setResults(res);
+      setLastQuery(trimmedQuery);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Search failed");
     }
@@ -36,35 +45,47 @@ export default function SearchPanel({
         <input
           type="text"
           value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          placeholder="Search title, url, tag..."
+          onChange={(e) => {
+            setQuery(e.target.value);
+            if (e.target.value.trim().length === 0) {
+              setResults(null);
+              setLastQuery(null);
+              setError(null);
+            }
+          }}
+          placeholder="SEARCH NODES..."
           className="search-input"
         />
-        <button type="submit" disabled={isSearching} className="search-button">
-          <Search size={16} />
+        <button
+          type="submit"
+          disabled={isSearching || query.trim().length === 0}
+          className="search-button"
+        >
+          <Search size={14} />
         </button>
       </form>
 
-      {error && <div className="text-danger small">{error}</div>}
+      {error && <div className="search-error">{error}</div>}
+      {isSearching && <div className="search-status">Searching...</div>}
 
       {results && results.nodes.length > 0 && (
         <div className="search-results">
-          <h4>Results ({results.nodes.length})</h4>
+          <div className="results-header">Yield: {results.nodes.length} Nodes</div>
           <ul className="result-list">
             {results.nodes.slice(0, 10).map(node => (
               <li key={node.id} onClick={() => onSelectNode(node.id)}>
-                <div className="result-label">{node.labels.join(" / ")}</div>
-                <div className="result-title">
+                <span className="result-label">{node.labels[0] || "NODE"}</span>
+                <span className="result-title" title={String(node.props.title ?? node.props.name ?? node.props.normalizedUrl ?? node.id)}>
                   {String(node.props.title ?? node.props.name ?? node.props.normalizedUrl ?? node.id)}
-                </div>
+                </span>
               </li>
             ))}
           </ul>
         </div>
       )}
       {results && results.nodes.length === 0 && (
-        <div className="search-results">
-          <p className="text-muted small">No results found.</p>
+        <div className="search-results empty">
+          No matches for "{lastQuery ?? query.trim()}"
         </div>
       )}
     </div>

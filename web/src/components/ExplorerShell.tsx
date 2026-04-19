@@ -34,20 +34,31 @@ export default function ExplorerShell({
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
   const [centeredNodeId, setCenteredNodeId] = useState<string | null>(null);
   const [depth, setDepth] = useState(2);
+  const [hasInteracted, setHasInteracted] = useState(false);
 
   useEffect(() => {
     setGraph(seedGraph);
+    setInlineError(null);
+    setSelectedNodeId(null);
+    setCenteredNodeId(null);
+    setDepth(2);
+    setHasInteracted(false);
   }, [seedGraph]);
 
-  const selectedNode = selectedNodeId 
-    ? graph.nodes.find(n => n.id === selectedNodeId) || null
+  const selectedNode = selectedNodeId
+    ? graph.nodes.find((node) => node.id === selectedNodeId) ?? null
     : null;
 
-  const handleSearch = async (query: string) => {
+  const handleSearch = async (query: string): Promise<GraphResult> => {
     return fetchSearchNodes(apiKey, query, 20, backendUrl);
   };
 
-  const handleFilter = async (filters: { tag: string; domain: string; type: string; session: string }) => {
+  const handleFilter = async (filters: {
+    tag: string;
+    domain: string;
+    type: string;
+    session: string;
+  }): Promise<void> => {
     setIsLoading(true);
     setInlineError(null);
     try {
@@ -55,14 +66,17 @@ export default function ExplorerShell({
       setGraph(result);
       setSelectedNodeId(null);
       setCenteredNodeId(null);
+      setHasInteracted(true);
     } catch (err) {
-      setInlineError(err instanceof Error ? err.message : "Filter failed");
+      const message = err instanceof Error ? err.message : "Filter failed";
+      setInlineError(message);
+      throw err instanceof Error ? err : new Error(message);
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleRecenter = async (nodeId: string) => {
+  const handleRecenter = async (nodeId: string): Promise<void> => {
     setIsLoading(true);
     setInlineError(null);
     try {
@@ -70,6 +84,7 @@ export default function ExplorerShell({
       setGraph(result);
       setCenteredNodeId(nodeId);
       setSelectedNodeId(nodeId);
+      setHasInteracted(true);
     } catch (err) {
       setInlineError(err instanceof Error ? err.message : "Recenter failed");
     } finally {
@@ -77,7 +92,7 @@ export default function ExplorerShell({
     }
   };
 
-  const handleExpand = async (nodeId: string) => {
+  const handleExpand = async (nodeId: string): Promise<void> => {
     setIsLoading(true);
     setInlineError(null);
     try {
@@ -86,6 +101,7 @@ export default function ExplorerShell({
       setGraph(result);
       setDepth(nextDepth);
       setCenteredNodeId(nodeId);
+      setHasInteracted(true);
     } catch (err) {
       setInlineError(err instanceof Error ? err.message : "Expand failed");
     } finally {
@@ -93,20 +109,20 @@ export default function ExplorerShell({
     }
   };
 
-  const renderCenterPanel = () => {
+  const renderCanvasOverlay = () => {
     if (isLoadingSeed) {
-      return <EmptyState title="Loading seed graph..." message="Requesting recent graph data from the backend." />;
+      return <EmptyState title="Initializing Graph" message="Establishing connection and requesting seed telemetry." />;
     }
 
     if (loadErrorMessage) {
-      return <EmptyState title="Could not load seed graph" message={loadErrorMessage} />;
+      return <EmptyState title="Connection Failed" message={loadErrorMessage} isError />;
     }
 
-    if (graph.nodes.length === 0 && graph === seedGraph) {
+    if (graph.nodes.length === 0 && !hasInteracted) {
       return (
         <EmptyState 
-          title="No seed data yet" 
-          message="The database has no recent graph data to display. Continue capturing browser activity, then refresh." 
+          title="Awaiting Telemetry" 
+          message="No activity detected. Ensure the capture extension is active, then refresh the seed." 
         />
       );
     }
@@ -114,23 +130,13 @@ export default function ExplorerShell({
     if (graph.nodes.length === 0) {
       return (
         <EmptyState 
-          title="No results" 
-          message="The query returned no nodes. Try relaxing your filters or searching differently." 
+          title="Zero Yield" 
+          message="The query parameters returned no nodes. Adjust filters to broaden scope." 
         />
       );
     }
 
-    return (
-      <>
-        {isLoading && <div className="loading-overlay">Loading...</div>}
-        <GraphCanvas 
-          graph={graph} 
-          onNodeClick={setSelectedNodeId} 
-          selectedNodeId={selectedNodeId} 
-          centeredNodeId={centeredNodeId} 
-        />
-      </>
-    );
+    return null;
   };
 
   return (
@@ -142,39 +148,54 @@ export default function ExplorerShell({
         onRefresh={onReloadSeed}
         onSignOut={onSignOut}
       />
-      <ErrorBanner error={inlineError || ""} onDismiss={() => setInlineError(null)} />
-      <section className="shell-grid">
-        <aside className="panel sidebar-left">
-          <h2>Search & Filters</h2>
-          <SearchPanel 
-            onSearch={handleSearch} 
-            onSelectNode={handleRecenter} 
-            isSearching={isLoading} 
+      
+      <div className="shell-workspace">
+        <div className="shell-canvas">
+          <GraphCanvas 
+            graph={graph} 
+            onNodeClick={setSelectedNodeId} 
+            selectedNodeId={selectedNodeId} 
+            centeredNodeId={centeredNodeId} 
           />
-          <FilterPanel 
-            onApplyFilter={handleFilter} 
-            isFiltering={isLoading} 
-          />
-        </aside>
+          {isLoading && <div className="canvas-loading">Processing...</div>}
+        </div>
         
-        <section className="panel panel-center" style={{ position: 'relative' }}>
-          {renderCenterPanel()}
-        </section>
-        
-        <aside className="panel sidebar-right">
-          <h2>Node Details</h2>
-          {selectedNode ? (
-            <NodeDetailPanel 
-              node={selectedNode} 
-              onRecenter={handleRecenter} 
-              onExpand={handleExpand} 
-              isExpanding={isLoading} 
-            />
-          ) : (
-            <p className="text-muted small">Select a node in the graph or search results to view details.</p>
+        <div className="shell-overlays">
+          <aside className="overlay-panel overlay-left">
+            <div className="overlay-section">
+              <h2 className="section-title">Query</h2>
+              <SearchPanel 
+                onSearch={handleSearch} 
+                onSelectNode={handleRecenter} 
+                isSearching={isLoading || isLoadingSeed}
+              />
+            </div>
+            <div className="overlay-section">
+              <h2 className="section-title">Filter</h2>
+              <FilterPanel 
+                onApplyFilter={handleFilter} 
+                isFiltering={isLoading || isLoadingSeed}
+              />
+            </div>
+          </aside>
+          
+          <div className="overlay-center-layer">
+            {renderCanvasOverlay()}
+            {inlineError && <ErrorBanner error={inlineError} onDismiss={() => setInlineError(null)} />}
+          </div>
+          
+          {selectedNode && (
+            <aside className="overlay-panel overlay-right">
+              <NodeDetailPanel 
+                node={selectedNode} 
+                onRecenter={handleRecenter} 
+                onExpand={handleExpand} 
+                isExpanding={isLoading} 
+              />
+            </aside>
           )}
-        </aside>
-      </section>
+        </div>
+      </div>
     </main>
   );
 }

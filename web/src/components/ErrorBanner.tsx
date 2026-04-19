@@ -4,12 +4,16 @@ interface ErrorBannerProps {
 }
 
 export default function ErrorBanner({ error, onDismiss }: ErrorBannerProps) {
+  if (!error) return null;
   return (
     <div className="error-banner">
-      <p>{error}</p>
+      <div className="error-content">
+        <span className="error-badge">ERR</span>
+        <p>{error}</p>
+      </div>
       {onDismiss && (
-        <button onClick={onDismiss} className="ghost-button btn-small">
-          Dismiss
+        <button onClick={onDismiss} className="dismiss-btn">
+          ✕
         </button>
       )}
     </div>

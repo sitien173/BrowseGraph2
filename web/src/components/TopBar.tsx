@@ -16,12 +16,13 @@ export default function TopBar({
   return (
     <header className="topbar">
       <div className="topbar-brand">
-        <h1>Explorer</h1>
-        <p>Read-only graph navigation</p>
+        <h1>BrowseGraph</h1>
+        <div className="brand-divider" />
+        <p>Terminal Session</p>
       </div>
       <div className="topbar-stats">
-        <span>{nodeCount} nodes</span>
-        <span>{edgeCount} edges</span>
+        <span className="stat-pill"><span className="stat-label">N</span> {nodeCount}</span>
+        <span className="stat-pill"><span className="stat-label">E</span> {edgeCount}</span>
       </div>
       <div className="topbar-actions">
         <button
@@ -29,10 +30,10 @@ export default function TopBar({
           onClick={() => void onRefresh()}
           disabled={isRefreshing}
         >
-          {isRefreshing ? "Refreshing..." : "Refresh seed"}
+          {isRefreshing ? "SYNCING..." : "SYNC SEED"}
         </button>
         <button type="button" className="ghost-button" onClick={onSignOut}>
-          Sign out
+          TERMINATE
         </button>
       </div>
     </header>

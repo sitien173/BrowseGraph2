@@ -24,66 +24,64 @@ export function GraphFilters({ filters, onFilterChange }: GraphFiltersProps): Re
     onFilterChange({ ...filters, [key]: value });
   };
 
+  const resetFilters = () => {
+    onFilterChange({ tag: "", domain: "", type: "", session: "" });
+  };
+
   return (
-    <div className="absolute left-0 right-0 bottom-0 z-10 p-2 pointer-events-none">
-      <div className={`mx-auto max-w-sm bg-white shadow-lg border border-gray-200 rounded-lg overflow-hidden pointer-events-auto transition-all duration-300 ${isOpen ? 'h-auto max-h-64' : 'h-10 max-h-10'}`}>
-        <header 
-          className="h-10 px-4 flex justify-between items-center cursor-pointer hover:bg-gray-50 transition-colors"
-          onClick={() => setIsOpen(!isOpen)}
-        >
-          <span className="text-xs font-bold text-gray-700 uppercase tracking-wider">Filters</span>
-          <svg className={`w-4 h-4 text-gray-400 transition-transform ${isOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" /></svg>
-        </header>
+    <section className={`filters-panel ${isOpen ? "is-open" : ""}`}>
+      <button
+        type="button"
+        className="filters-toggle"
+        onClick={() => setIsOpen((open) => !open)}
+        aria-expanded={isOpen}
+      >
+        <div>
+          <p className="panel-kicker">Graph Controls</p>
+          <h3>Filters</h3>
+        </div>
+        <span className="filters-state">{isOpen ? "Hide" : "Show"}</span>
+      </button>
 
-        {isOpen && (
-          <div className="p-4 pt-0 space-y-3 overflow-y-auto max-h-52">
-            <div className="space-y-1">
-              <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Node Type</label>
-              <select 
-                value={filters.type} 
-                onChange={e => updateFilter("type", e.target.value)}
-                className="w-full text-xs border border-gray-200 rounded p-1 focus:outline-none focus:ring-1 focus:ring-blue-500"
-              >
-                <option value="">All Types</option>
-                {NODE_TYPES.map(type => (
-                  <option key={type} value={type}>{type}</option>
-                ))}
-              </select>
-            </div>
+      {isOpen && (
+        <div className="filters-grid">
+          <label className="field compact-field">
+            <span>Node type</span>
+            <select value={filters.type} onChange={(event) => updateFilter("type", event.target.value)}>
+              <option value="">All types</option>
+              {NODE_TYPES.map((type) => (
+                <option key={type} value={type}>
+                  {type}
+                </option>
+              ))}
+            </select>
+          </label>
 
-            <div className="space-y-1">
-              <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Tag Slug</label>
-              <input 
-                type="text" 
-                value={filters.tag} 
-                onChange={e => updateFilter("tag", e.target.value)}
-                placeholder="e.g. research"
-                className="w-full text-xs border border-gray-200 rounded p-1 focus:outline-none focus:ring-1 focus:ring-blue-500"
-              />
-            </div>
+          <label className="field compact-field">
+            <span>Tag slug</span>
+            <input
+              type="text"
+              value={filters.tag}
+              onChange={(event) => updateFilter("tag", event.target.value)}
+              placeholder="research"
+            />
+          </label>
 
-            <div className="space-y-1">
-              <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Domain</label>
-              <input 
-                type="text" 
-                value={filters.domain} 
-                onChange={e => updateFilter("domain", e.target.value)}
-                placeholder="e.g. github.com"
-                className="w-full text-xs border border-gray-200 rounded p-1 focus:outline-none focus:ring-1 focus:ring-blue-500"
-              />
-            </div>
+          <label className="field compact-field">
+            <span>Domain</span>
+            <input
+              type="text"
+              value={filters.domain}
+              onChange={(event) => updateFilter("domain", event.target.value)}
+              placeholder="github.com"
+            />
+          </label>
 
-            <div className="flex gap-2">
-              <button 
-                onClick={() => onFilterChange({ tag: "", domain: "", type: "", session: "" })}
-                className="text-[10px] text-blue-600 font-bold hover:underline"
-              >
-                Reset All
-              </button>
-            </div>
-          </div>
-        )}
-      </div>
-    </div>
+          <button type="button" className="ghost-btn compact-action" onClick={resetFilters}>
+            Reset filters
+          </button>
+        </div>
+      )}
+    </section>
   );
 }

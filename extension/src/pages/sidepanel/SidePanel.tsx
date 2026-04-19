@@ -4,38 +4,49 @@ import { GraphView } from "./GraphView";
 
 type SidePanelTab = "editor" | "graph";
 
+const TAB_META: Record<SidePanelTab, { label: string; description: string }> = {
+  graph: {
+    label: "Graph",
+    description: "Explore neighborhood"
+  },
+  editor: {
+    label: "Context",
+    description: "Capture tab details"
+  }
+};
+
 export function SidePanel(): ReactElement {
   const [activeTab, setActiveTab] = useState<SidePanelTab>("graph");
 
   return (
-    <div className="sidepanel-container h-full flex flex-col">
-      <nav className="flex border-b border-gray-200 bg-white">
-        <button
-          className={`flex-1 py-3 px-4 text-sm font-medium transition-colors ${
-            activeTab === "graph"
-              ? "text-blue-600 border-b-2 border-blue-600 bg-blue-50"
-              : "text-gray-500 hover:text-gray-700 hover:bg-gray-50"
-          }`}
-          onClick={() => setActiveTab("graph")}
-        >
-          Graph
-        </button>
-        <button
-          className={`flex-1 py-3 px-4 text-sm font-medium transition-colors ${
-            activeTab === "editor"
-              ? "text-blue-600 border-b-2 border-blue-600 bg-blue-50"
-              : "text-gray-500 hover:text-gray-700 hover:bg-gray-50"
-          }`}
-          onClick={() => setActiveTab("editor")}
-        >
-          Context
-        </button>
+    <div className="sidepanel-app">
+      <header className="sidepanel-topbar">
+        <div>
+          <p className="sidepanel-kicker">Companion</p>
+          <h1>BrowseGraph</h1>
+        </div>
+      </header>
+
+      <nav className="sidepanel-tabstrip" aria-label="Side panel modes">
+        {(Object.keys(TAB_META) as SidePanelTab[]).map((tab) => {
+          const meta = TAB_META[tab];
+          const isActive = activeTab === tab;
+
+          return (
+            <button
+              key={tab}
+              type="button"
+              className={`sidepanel-tab ${isActive ? "is-active" : ""}`}
+              onClick={() => setActiveTab(tab)}
+            >
+              <span className="sidepanel-tab-label">{meta.label}</span>
+              <span className="sidepanel-tab-meta">{meta.description}</span>
+            </button>
+          );
+        })}
       </nav>
 
-      <div className="flex-1 overflow-hidden">
-        {activeTab === "graph" && <GraphView />}
-        {activeTab === "editor" && <ContextEditor />}
-      </div>
+      <div className="sidepanel-body">{activeTab === "graph" ? <GraphView /> : <ContextEditor />}</div>
     </div>
   );
 }

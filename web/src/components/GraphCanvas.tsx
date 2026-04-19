@@ -3,12 +3,12 @@ import ForceGraph2D, { ForceGraphMethods } from "react-force-graph-2d";
 import { GraphResult } from "../types/graph";
 
 const NODE_COLORS: Record<string, string> = {
-  Tab: "#3b82f6",
-  Bookmark: "#f59e0b",
-  Tag: "#10b981",
+  Tab: "#00d67d",
+  Bookmark: "#00ad65",
+  Tag: "#3b82f6",
   Domain: "#8b5cf6",
   TabGroup: "#ec4899",
-  Session: "#6b7280"
+  Session: "#7b8e84"
 };
 
 interface GraphCanvasProps {
@@ -40,7 +40,7 @@ export default function GraphCanvas({ graph, onNodeClick, selectedNodeId, center
       ...n,
       id: n.id,
       name: String(n.props.title || n.props.name || n.props.normalizedUrl || n.props.normalizedHost || n.id),
-      color: NODE_COLORS[n.labels[0]] || "#94a3b8"
+      color: NODE_COLORS[n.labels[0]] || "#e3ece6"
     }));
     
     const links = graph.edges.map(e => ({
@@ -59,15 +59,14 @@ export default function GraphCanvas({ graph, onNodeClick, selectedNodeId, center
     const finalNodes = nodes.map(n => ({
       ...n,
       val: 2 + (degrees[n.id] || 0) * 0.5,
-      // highlight if selected or centered
-      color: n.id === selectedNodeId ? "#ef4444" : n.id === centeredNodeId ? "#000000" : n.color
+      color: n.id === selectedNodeId ? "#ff5a5a" : n.id === centeredNodeId ? "#ffffff" : n.color
     }));
 
     return { nodes: finalNodes, links };
   }, [graph, selectedNodeId, centeredNodeId]);
 
   return (
-    <div className="graph-canvas-container" ref={containerRef} style={{ width: '100%', height: '100%', minHeight: '400px' }}>
+    <div className="graph-canvas-container" ref={containerRef} style={{ width: '100%', height: '100%' }}>
       <ForceGraph2D
         ref={fgRef as any}
         width={dimensions.width}
@@ -75,7 +74,7 @@ export default function GraphCanvas({ graph, onNodeClick, selectedNodeId, center
         graphData={graphData}
         nodeLabel="name"
         nodeColor="color"
-        linkColor={link => (link as any).type === "RELATED" ? "#94a3b8" : "#cbd5e1"}
+        linkColor={link => (link as any).type === "RELATED" ? "rgba(123, 142, 132, 0.4)" : "rgba(227, 236, 230, 0.2)"}
         linkDirectionalArrowLength={3}
         linkDirectionalArrowRelPos={1}
         onNodeClick={(node) => onNodeClick((node as any).id)}

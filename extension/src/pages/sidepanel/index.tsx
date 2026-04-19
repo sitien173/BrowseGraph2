@@ -10,6 +10,8 @@ if (rootElement === null) {
   throw new Error("Side panel root element was not found.");
 }
 
+document.body.classList.add("browsegraph-sidepanel");
+
 createRoot(rootElement).render(
   <StrictMode>
     <SidePanel />

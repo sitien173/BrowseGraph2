@@ -31,6 +31,7 @@ const toUiErrorMessage = (error: unknown): string => {
 export default function App() {
   const backendUrl = useMemo(() => getEmbeddedBackendUrl(), []);
   const [apiKey, setApiKey] = useState<string | null>(null);
+  const [pendingApiKey, setPendingApiKey] = useState("");
   const [authError, setAuthError] = useState<string | null>(null);
   const [seedError, setSeedError] = useState<string | null>(null);
   const [graph, setGraph] = useState<GraphResult>(EMPTY_GRAPH);
@@ -53,6 +54,7 @@ export default function App() {
   const connectWithKey = async (key: string): Promise<void> => {
     setIsSubmittingAuth(true);
     setAuthError(null);
+    setPendingApiKey(key);
 
     try {
       await loadSeed(key);
@@ -80,6 +82,7 @@ export default function App() {
   const handleSignOut = (): void => {
     clearStoredApiKey();
     setApiKey(null);
+    setPendingApiKey("");
     setAuthError(null);
     setSeedError(null);
     setGraph(EMPTY_GRAPH);
@@ -95,6 +98,7 @@ export default function App() {
       }
 
       setApiKey(storedApiKey);
+      setPendingApiKey(storedApiKey);
 
       try {
         await loadSeed(storedApiKey);
@@ -102,6 +106,7 @@ export default function App() {
       } catch (error) {
         clearStoredApiKey();
         setApiKey(null);
+        setPendingApiKey("");
         setGraph(EMPTY_GRAPH);
         setAuthError(
           `Saved key could not be used. ${toUiErrorMessage(error)}`
@@ -117,9 +122,9 @@ export default function App() {
     return (
       <main className="auth-page">
         <section className="auth-card">
-          <p className="auth-kicker">Private standalone explorer</p>
+          <p className="auth-kicker">Auth // Local Storage</p>
           <h1>BrowseGraph</h1>
-          <p className="auth-copy">Checking saved API key...</p>
+          <div className="auth-loading">Checking saved API key...</div>
         </section>
       </main>
     );
@@ -129,7 +134,8 @@ export default function App() {
     return (
       <AuthScreen
         backendUrl={backendUrl}
-        initialApiKey=""
+        initialApiKey={pendingApiKey}
+        onApiKeyChange={setPendingApiKey}
         errorMessage={authError}
         isSubmitting={isSubmittingAuth}
         onConnect={connectWithKey}
